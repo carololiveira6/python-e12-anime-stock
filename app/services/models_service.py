@@ -59,7 +59,7 @@ class AnimeTable:
         conn, cur = conn_cur()
 
         if AnimeTable.create_table(self) == False:
-            return []
+            return {"data": []}, 200
 
         cur.execute("SELECT * FROM animes")
 
@@ -74,12 +74,12 @@ class AnimeTable:
 
         return result
 
-    def select_id(self, serie_id):
+    def select_id(self, anime_id):
         conn, cur = conn_cur()
 
         try:
             
-            cur.execute("SELECT * FROM aimes WHERE id = %(serie_id)s", {"serie_id": serie_id})
+            cur.execute("SELECT * FROM aimes WHERE id = %(anime_id)s", {"anime_id": anime_id})
 
             query = cur.fetchone()
 
@@ -87,7 +87,7 @@ class AnimeTable:
 
             result = dict(zip(self.table_header, query))
     
-            return {"data": result}
+            return {"data": result}, 200
 
         except:
 

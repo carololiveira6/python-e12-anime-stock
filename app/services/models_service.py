@@ -1,5 +1,6 @@
 from flask.json import jsonify
 from .conn_cur_service import conn_cur, end_conn_cur
+from http import HTTPStatus
 
 class AnimeTable:
 
@@ -93,3 +94,51 @@ class AnimeTable:
 
             AnimeTable.create_table(self)
             return {"error": "Not Found"}, 404
+
+    def update_anime(self, data: dict, anime_id: int):
+        conn, cur = conn_cur()
+
+        check_fields = self.check_fields(data, ["anime"])
+
+        if check_fields:
+            raise KeyError(
+                {
+                    "available_keys": ["anime", "released_date", "seasons"],
+                    "wrong_keys_sended": [check_fields,]
+                }
+            )
+
+        data["anime_id"] = anime_id
+
+        cur.execute(
+            """
+                UPDATE animes
+                SET anime = %(anime)s
+                    WHERE id = %(anime_id)s
+                RETURNING *
+            """,
+            data,
+        )
+        query = cur.fetchone()
+
+        end_conn_cur(conn, cur)
+
+        return dict(zip(self.table_header, query))
+
+    def delete_anime(self, anime_id: int):
+        conn, cur = conn_cur()
+
+        if self.select_id(anime_id):
+            cur.execute(
+                """
+                    DELETE FROM animes
+                        WHERE id = %(anime_id)s
+                """,
+                {"anime_id": anime_id},
+            )
+
+            end_conn_cur(conn, cur)
+
+            return "No content", HTTPStatus.NO_CONTENT
+
+        return {"error": "Not Found"}, HTTPStatus.NOT_FOUND

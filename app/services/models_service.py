@@ -18,7 +18,7 @@ class AnimeTable:
                         id BIGSERIAL PRIMARY KEY,
                         anime VARCHAR(100) NOT NULL UNIQUE,
                         released_date DATE NOT NULL,
-                        season INTEGER NOT NULL
+                        seasons INTEGER NOT NULL
                     )
             """
         )
@@ -26,13 +26,22 @@ class AnimeTable:
         end_conn_cur(conn, cur)
 
     def check_fields(self, data: dict):
+        required_keys = ["anime", "released_date", "seasons"]
         recived_keys = data.keys()
 
-        return [required for required in self.required_fields if required not in recived_keys]
+        return [required for required in required_keys if required not in recived_keys]
 
     def create_anime(self, data: dict):
         conn, cur = conn_cur()
         self.create_table()
+
+        if AnimeTable.check_fields(self, data):
+            raise KeyError(
+                {
+                    "available_keys": ["anime", "released_date", "seasons"],
+                    "wrong_keys_sended": list(data.keys())
+                }, HTTPStatus.UNPROCESSABLE_ENTITY
+            )
 
         data['anime'] = data['anime'].title()
 
@@ -60,7 +69,7 @@ class AnimeTable:
         conn, cur = conn_cur()
 
         if AnimeTable.create_table(self) == False:
-            return {"data": []}, 200
+            return {"data": []}, HTTPStatus.OK
 
         cur.execute("SELECT * FROM animes")
 
@@ -88,24 +97,22 @@ class AnimeTable:
 
             result = dict(zip(self.table_header, query))
     
-            return {"data": result}, 200
+            return {"data": result}, HTTPStatus.OK
 
         except:
 
             AnimeTable.create_table(self)
-            return {"error": "Not Found"}, 404
+            return {"error": "Not Found"}, HTTPStatus.NOT_FOUND
 
     def update_anime(self, data: dict, anime_id: int):
         conn, cur = conn_cur()
 
-        check_fields = self.check_fields(data, ["anime"])
-
-        if check_fields:
+        if AnimeTable.check_fields(data):
             raise KeyError(
                 {
                     "available_keys": ["anime", "released_date", "seasons"],
-                    "wrong_keys_sended": [check_fields,]
-                }
+                    "wrong_keys_sended": list(data.keys())
+                }, HTTPStatus.UNPROCESSABLE_ENTITY
             )
 
         data["anime_id"] = anime_id

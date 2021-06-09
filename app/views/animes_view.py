@@ -17,10 +17,7 @@ def get_create():
             return animes.create_anime(data), HTTPStatus.CREATED
 
         except KeyError as e:
-            return {"avaliable_keys": ["anime", "released_date", "seasons"],
-            "wrong_keys_sended": [
-                f'\"{e.args[0]}\"'
-                ]}, HTTPStatus.UNPROCESSABLE_ENTITY
+            return e.args
 
         except errors.UniqueViolation as _:
             return {"error": "anime is already exists"}, HTTPStatus.UNPROCESSABLE_ENTITY
@@ -44,15 +41,12 @@ def update(anime_id):
         return animes.update_anime(data, anime_id)
 
     except KeyError as e:
-        return {"avaliable_keys": ["anime", "released_date", "seasons"],
-        "wrong_keys_sended": [
-            f'\"{e.args[0]}\"'
-            ]}, HTTPStatus.UNPROCESSABLE_ENTITY
+        return e.args
 
     except errors.UniqueViolation as _:
         return {"error": "Not Found"}, HTTPStatus.NOT_FOUND
 
-@bp_anime.route("/animes/<int:anime_id>", methods=["DELETE"])
+@bp_animes.route("/animes/<int:anime_id>", methods=["DELETE"])
 def delete(anime_id: int):
     animes = AnimeTable()
 

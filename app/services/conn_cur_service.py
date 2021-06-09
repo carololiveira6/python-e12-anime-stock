@@ -1,10 +1,8 @@
 from environs import Env
 import psycopg2
 
-
 env = Env()
 env.read_env()
-
 
 def conn_cur():
     conn = psycopg2.connect(

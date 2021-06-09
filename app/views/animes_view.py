@@ -29,7 +29,7 @@ def filter(anime_id):
 
     animes = AnimeTable()
 
-    return animes.select_id(anime_id)
+    return {"data": animes.select_id(anime_id)},  HTTPStatus.OK
 
 @bp_animes.route('/animes/<int:anime_id>', methods=['PATCH'])
 def update(anime_id):

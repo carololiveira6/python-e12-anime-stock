@@ -68,7 +68,7 @@ class AnimeTable:
     def return_data(self):
         conn, cur = conn_cur()
 
-        if AnimeTable.create_table(self) == False:
+        if AnimeTable.create_table() == False:
             return {"data": []}, HTTPStatus.OK
 
         cur.execute("SELECT * FROM animes")
@@ -87,21 +87,21 @@ class AnimeTable:
     def select_id(self, anime_id):
         conn, cur = conn_cur()
 
+        cur.execute("SELECT * FROM animes WHERE id = %(anime_id)s", {"anime_id": anime_id})
+
+        query = cur.fetchone()
+
+        end_conn_cur(conn, cur)
+
+        result = dict(zip(self.table_header, query))
+        
+        result["released_date"] = result["released_date"].strftime("%d/%m/%Y")
+
         try:
-            
-            cur.execute("SELECT * FROM aimes WHERE id = %(anime_id)s", {"anime_id": anime_id})
-
-            query = cur.fetchone()
-
-            end_conn_cur(conn, cur)
-
-            result = dict(zip(self.table_header, query))
-    
-            return {"data": result}, HTTPStatus.OK
+            return (result,)
 
         except:
-
-            AnimeTable.create_table(self)
+            AnimeTable.create_table()
             return {"error": "Not Found"}, HTTPStatus.NOT_FOUND
 
     def update_anime(self, data: dict, anime_id: int):

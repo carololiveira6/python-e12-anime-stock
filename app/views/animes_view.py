@@ -29,7 +29,11 @@ def filter(anime_id):
 
     animes = AnimeTable()
 
-    return {"data": animes.select_id(anime_id)},  HTTPStatus.OK
+    try:
+        return {"data": [animes.select_id(anime_id)]},  HTTPStatus.OK
+
+    except:
+        return {"error": "Not Found"}, HTTPStatus.NOT_FOUND
 
 @bp_animes.route('/animes/<int:anime_id>', methods=['PATCH'])
 def update(anime_id):
@@ -50,4 +54,8 @@ def update(anime_id):
 def delete(anime_id: int):
     animes = AnimeTable()
 
-    return animes.delete_anime(anime_id)
+    try:
+        return animes.delete_anime(anime_id)
+    
+    except:
+        return {"error": "Not Found"}, HTTPStatus.NOT_FOUND

@@ -1,4 +1,4 @@
-from flask.json import jsonify
+from flask.json import jsonify, request
 from .conn_cur_service import conn_cur, end_conn_cur
 from http import HTTPStatus
 
@@ -30,6 +30,12 @@ class AnimeTable:
         recived_keys = data.keys()
 
         return [required for required in required_keys if required not in recived_keys]
+
+    def analyze_fields(self, data: dict):
+        required_keys = ["anime", "released_date", "seasons"]
+        recived_keys = data.keys()
+
+        return [recived for recived in recived_keys if recived not in required_keys]
 
     def create_anime(self, data: dict):
         conn, cur = conn_cur()
@@ -86,7 +92,7 @@ class AnimeTable:
 
     def select_id(self, anime_id):
         conn, cur = conn_cur()
-
+        
         cur.execute("SELECT * FROM animes WHERE id = %(anime_id)s", {"anime_id": anime_id})
 
         query = cur.fetchone()
@@ -97,17 +103,13 @@ class AnimeTable:
         
         result["released_date"] = result["released_date"].strftime("%d/%m/%Y")
 
-        try:
-            return (result,)
-
-        except:
-            AnimeTable.create_table()
-            return {"error": "Not Found"}, HTTPStatus.NOT_FOUND
+        return result
 
     def update_anime(self, data: dict, anime_id: int):
         conn, cur = conn_cur()
+        return_data = self.select_id(anime_id)
 
-        if AnimeTable.check_fields(data):
+        if AnimeTable.analyze_fields(self, data):
             raise KeyError(
                 {
                     "available_keys": ["anime", "released_date", "seasons"],
@@ -115,27 +117,39 @@ class AnimeTable:
                 }, HTTPStatus.UNPROCESSABLE_ENTITY
             )
 
+        update_data = request.get_json()        
+        return_data.update(update_data)
+
+        data = return_data
+        data['anime'] = data['anime'].title()
         data["anime_id"] = anime_id
 
         cur.execute(
             """
                 UPDATE animes
-                SET anime = %(anime)s
-                    WHERE id = %(anime_id)s
+                SET anime = %(anime)s,
+                    released_date = %(released_date)s,
+                    seasons = %(seasons)s
+                        WHERE id = %(anime_id)s
                 RETURNING *
             """,
-            data,
+           data,
         )
         query = cur.fetchone()
 
         end_conn_cur(conn, cur)
 
-        return dict(zip(self.table_header, query))
+        result = dict(zip(self.table_header, query))
+
+        result["released_date"] = result["released_date"].strftime("%d/%m/%Y")
+
+        return result
 
     def delete_anime(self, anime_id: int):
         conn, cur = conn_cur()
+        return_data = self.select_id(anime_id)
 
-        if self.select_id(anime_id):
+        if return_data:
             cur.execute(
                 """
                     DELETE FROM animes
@@ -147,5 +161,3 @@ class AnimeTable:
             end_conn_cur(conn, cur)
 
             return "No content", HTTPStatus.NO_CONTENT
-
-        return {"error": "Not Found"}, HTTPStatus.NOT_FOUND

@@ -3,7 +3,7 @@ from ..services.models_service import AnimeTable
 from psycopg2 import errors
 from http import HTTPStatus
 
-bp_animes = Blueprint('animes', __name__, url_prefix='/api')
+bp_animes = Blueprint('animes', __name__)
 
 @bp_animes.route('/animes', methods=['GET', 'POST'])
 def get_create():
@@ -17,7 +17,7 @@ def get_create():
             return animes.create_anime(data), HTTPStatus.CREATED
 
         except KeyError as e:
-            return e.args
+            return e.args[0], HTTPStatus.UNPROCESSABLE_ENTITY
 
         except errors.UniqueViolation as _:
             return {"error": "anime is already exists"}, HTTPStatus.UNPROCESSABLE_ENTITY
@@ -47,7 +47,7 @@ def update(anime_id):
     except KeyError as e:
         return e.args
 
-    except errors.UniqueViolation as _:
+    except TypeError as _:
         return {"error": "Not Found"}, HTTPStatus.NOT_FOUND
 
 @bp_animes.route("/animes/<int:anime_id>", methods=["DELETE"])

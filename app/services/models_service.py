@@ -35,17 +35,25 @@ class AnimeTable:
         required_keys = ["anime", "released_date", "seasons"]
         recived_keys = data.keys()
 
-        return [recived for recived in recived_keys if recived not in required_keys]
+        result =  [recived for recived in recived_keys if recived not in required_keys]
+
+        return result
 
     def create_anime(self, data: dict):
         conn, cur = conn_cur()
         self.create_table()
 
-        if AnimeTable.check_fields(self, data):
+        required_keys = ["anime", "released_date", "seasons"]
+        recived_keys = data.keys()
+
+        result =  [recived for recived in recived_keys if recived not in required_keys]
+
+
+        if AnimeTable.analyze_fields(self, data):
             raise KeyError(
                 {
                     "available_keys": ["anime", "released_date", "seasons"],
-                    "wrong_keys_sended": list(data.keys())
+                    "wrong_keys_sended": list(result)
                 }, HTTPStatus.UNPROCESSABLE_ENTITY
             )
 
